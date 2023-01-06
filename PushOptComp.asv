@@ -1,0 +1,44 @@
+
+
+push
+
+
+function result = PushOptComp(model,pushArray,knotPts,simTime)
+
+
+addpath("models", "trajectory optimization")
+addpath("C:\Users\tomhu\OneDrive - Queen's University\MASc\Research\Lit Review\MATLAB\impulsive push recovery\Simulation")
+
+for i = 1:size(pushArray,2)
+    
+    push = pushArray(:,i);
+    
+    p = modelInt(model,push,simTime,knotPts);
+    
+    X = trajOpt(p,0);
+    
+    result(i).pushParam         = push;
+    result(i).sim.state         = X.state;
+    result(i).sim.control       = X.control;
+    result(i).controlCompContribution    = controlContribution(X.control,p);
+    
+end
+
+
+end
+
+function uPercent = controlContribution(u,p)
+
+uNormalized = zeros(size(u));       % initilize Normalized control = u_i/u_i{max}
+compCost    = zeros(size(u,1),1);   % Normalized cost of control for each component
+
+    for i = 1:p.pack.uSize(1)
+        uNormalized(i,:) = u(i,:)/p.bounds.control(i,2);
+        compCost(i) = uNormalized(i,:) * uNormalized(i,:)';
+    end
+
+totalCost = sum(compCost);    
+
+uPercent = compCost/totalCost;
+    
+end
